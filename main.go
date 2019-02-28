@@ -79,6 +79,8 @@ func processSlideShow(tags map[string][]image) slideShow {
 
 				if len(lastSlide) == 1 && lastSlide[0].vertical && image.vertical {
 					lastSlide = append(lastSlide, image)
+					curSlideShow.slides[len(curSlideShow.slides)-1] = lastSlide
+					curSlideShow.ids = append(curSlideShow.ids, image.id)
 				} else {
 					temporySlide := make(slide, 1)
 					temporySlide[0] = image
@@ -92,7 +94,7 @@ func processSlideShow(tags map[string][]image) slideShow {
 }
 
 func writeFile(curSlideShow slideShow, fileKey string) {
-	resultFileContent := fmt.Sprintf("%d", len(curSlideShow.slides))
+	resultFileContent := fmt.Sprintf("%d\n", len(curSlideShow.slides))
 	for _, slide := range curSlideShow.slides {
 		if len(slide) == 1 {
 			resultFileContent += fmt.Sprintf("%d\n", slide[0].id)
