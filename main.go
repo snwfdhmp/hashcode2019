@@ -3,8 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/afero"
 )
@@ -21,6 +23,10 @@ var (
 	}
 )
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 type image struct {
 	id       int
 	vertical bool
@@ -31,9 +37,82 @@ func main() {
 	images, err := parseFile(imagePath["a"])
 	if err != nil {
 		fmt.Printf("fatal: %v\n", err)
+		return
 	}
 
-	fmt.Printf("Result : %#v\n", images)
+	slides := make([]slide, 0)
+	for i := 0; i < len(images); i++ {
+		imgIndex := randomIndex(images)
+		img := images[imgIndex]
+		images = append(images[:imgIndex], images[imgIndex+1:]...)
+		if !img.vertical {
+			slides = append(slides, slide{images: []image{img}})
+			continue
+		}
+
+		vIndex := findFirstVertical(images)
+		if vIndex == -1 {
+			continue
+		}
+		slides = append(slides, slide{images: []image{img, images[vIndex]}})
+		images = append(images[:vIndex], images[vIndex+1:]...)
+		i++
+	}
+
+	if err := afero.WriteFile(fs, "ouput", Marshal(slides), 0760); err != nil {
+		fmt.Printf("PANIIIC: cannot write file: %s\n", err)
+		return
+	}
+
+	fmt.Print("Done :D")
+}
+
+func randomIndex(items []image) int {
+	return rand.Intn(len(items))
+}
+
+func findFirstVertical(items []image) int {
+	for i := range items {
+		if items[i].vertical {
+			return i
+		}
+	}
+	return -1
+}
+
+type slide struct {
+	images []image
+}
+
+func Marshal(slides []slide) []byte {
+	output := fmt.Sprintf("%d\n", len(slides))
+	for i := range slides {
+		if len(slides[i].images) == 2 {
+			output += fmt.Sprintf("%d %d\n", slides[i].images[0].id, slides[i].images[1].id)
+			continue
+		}
+
+		output += fmt.Sprintf("%d\n", slides[i].images[0].id)
+	}
+
+	return []byte(output)
+}
+
+func (s *slide) isHealthy() bool {
+	switch len(s.images) {
+	case 2:
+		if !s.images[0].vertical || !s.images[1].vertical {
+			return false
+		}
+		return true
+	case 1:
+		if s.images[0].vertical {
+			return false
+		}
+		return true
+	default:
+		return false
+	}
 }
 
 func parseFile(filepath string) ([]image, error) {
