@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -10,18 +11,29 @@ import (
 
 var (
 	fs = afero.NewOsFs()
+
+	imagePath = map[string]string{
+		"a": "./data/a_example.txt",
+		"b": "./data/b_lovely_landscapes.txt",
+		"c": "./data/c_memorable_moments.txt",
+		"d": "./data/d_pet_pictures.txt",
+		"e": "./data/e_shiny_selfies.txt",
+	}
 )
 
 type image struct {
+	id       int
 	vertical bool
 	tags     []string
 }
 
-func NewImage() *image {
-	return &image{
-		vertical: false,
-		tags:     make([]string, 0),
+func main() {
+	images, err := parseFile(imagePath["a"])
+	if err != nil {
+		fmt.Printf("fatal: %v\n", err)
 	}
+
+	fmt.Printf("Result : %#v\n", images)
 }
 
 func parseFile(filepath string) ([]image, error) {
@@ -36,11 +48,12 @@ func parseFile(filepath string) ([]image, error) {
 	}
 
 	nbrImages, _ := strconv.Atoi(lines[0])
-	images := make([]*image, 0)
+	images := make([]image, 0)
 
 	for i := 0; i < nbrImages; i++ {
 		items := strings.Split(lines[i+1], " ")
 		img := NewImage()
+		img.id = i
 
 		if items[0] == "V" {
 			img.vertical = true
@@ -54,4 +67,11 @@ func parseFile(filepath string) ([]image, error) {
 	}
 
 	return images, nil
+}
+
+func NewImage() image {
+	return image{
+		vertical: false,
+		tags:     make([]string, 0),
+	}
 }
