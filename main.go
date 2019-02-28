@@ -53,10 +53,19 @@ func main() {
 		//fmt.Printf("\nthe lenght of v is %d", len(v))
 		for _, image := range v {
 			if !intInSlice(image.id, slideShow.ids) {
-				temporySlide := make(slide, 1)
-				temporySlide[0] = image
-				slideShow.slides = append(slideShow.slides, temporySlide)
-				slideShow.ids = append(slideShow.ids, image.id)
+				lastSlide := slide{}
+				if len(slideShow.slides) > 0 {
+					lastSlide = slideShow.slides[len(slideShow.slides)-1]
+				}
+
+				if len(lastSlide) == 1 && lastSlide[0].vertical && image.vertical {
+					lastSlide = append(lastSlide, image)
+				} else {
+					temporySlide := make(slide, 1)
+					temporySlide[0] = image
+					slideShow.slides = append(slideShow.slides, temporySlide)
+					slideShow.ids = append(slideShow.ids, image.id)
+				}
 			}
 		}
 	}
