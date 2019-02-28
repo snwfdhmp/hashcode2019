@@ -47,21 +47,25 @@ func main() {
 
 	slideShow := slideShow{}
 
-	fmt.Printf("\nthe lenght of tags is %d", len(tags))
+	//fmt.Printf("\nthe lenght of tags is %d", len(tags))
 	for _, v := range tags {
-		fmt.Printf("\ntag is %d", v)
-		fmt.Printf("\nthe lenght of v is %d", len(v))
+		//fmt.Printf("\ntag is %d", v)
+		//fmt.Printf("\nthe lenght of v is %d", len(v))
 		for _, image := range v {
 			if !intInSlice(image.id, slideShow.ids) {
-				temporySlide := make(slide, 0)
+				temporySlide := make(slide, 1)
 				temporySlide[0] = image
 				slideShow.slides = append(slideShow.slides, temporySlide)
 				slideShow.ids = append(slideShow.ids, image.id)
 			}
-
 		}
 	}
-	fmt.Printf("Result : %#v\n", slideShow)
+
+	//fmt.Printf("Result : %#v\n", slideShow)
+	fmt.Printf("%d\n", len(slideShow.slides))
+	for _, slide := range slideShow.slides {
+		fmt.Printf("%d\n", slide[0].id)
+	}
 }
 
 func intInSlice(a int, list []int) bool {
