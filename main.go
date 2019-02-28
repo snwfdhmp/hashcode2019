@@ -27,13 +27,20 @@ type image struct {
 	tags     []string
 }
 
+type tag map[string][]image
+
 func main() {
 	images, err := parseFile(imagePath["a"])
 	if err != nil {
 		fmt.Printf("fatal: %v\n", err)
 	}
 
-	fmt.Printf("Result : %#v\n", images)
+	//fmt.Printf("Result : %#v\n", images)
+
+	tags := GenerateDictionnaireTag(images)
+
+	fmt.Printf("Result : %#v\n", tags)
+
 }
 
 func parseFile(filepath string) ([]image, error) {
@@ -74,4 +81,16 @@ func NewImage() image {
 		vertical: false,
 		tags:     make([]string, 0),
 	}
+}
+
+func GenerateDictionnaireTag(images []image) map[string][]image {
+	tag := make(map[string][]image)
+	for i := range images {
+		for j := range images[i].tags {
+			fmt.Printf("\ntag is : %s and image is : %s", images[i].tags[j], images[i])
+			tag[images[i].tags[j]] = append(tag[images[i].tags[j]], images[i])
+		}
+
+	}
+	return tag
 }
