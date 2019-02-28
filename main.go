@@ -15,7 +15,9 @@ import (
 var (
 	fs = afero.NewOsFs()
 
-	imageChoice string
+	imageChoice       string
+	maxTries          int
+	minimumScoreToLog int
 
 	imagePath = map[string]string{
 		"a": "./data/a_example.txt",
@@ -37,7 +39,9 @@ type image struct {
 }
 
 func main() {
-	flag.StringVar(&imageChoice, "image", "a", "image to choose")
+	flag.StringVar(&imageChoice, "image", "d", "image to choose")
+	flag.IntVar(&maxTries, "max_tries", 100, "maximum tries to make")
+	flag.IntVar(&minimumScoreToLog, "minimum", 100000, "minimum score to save")
 	flag.Parse()
 
 	fmt.Printf("Processing image %s\n", strings.ToUpper(imageChoice))
@@ -48,11 +52,37 @@ func main() {
 		return
 	}
 
+	maxScore := 0
+	for try := 0; try < maxTries; try++ {
+		saveImg := make([]image, len(images))
+		copy(saveImg, images)
+
+		fmt.Printf("Test n°%d ...", try)
+		slides := makeSlideShow(saveImg)
+		score := getScore(slides)
+
+		fmt.Printf("\rTest n°%d: score %d", try, score)
+		if score > maxScore {
+			fmt.Print(" HIGH SCORE !!!!")
+			maxScore = score
+			if score >= minimumScoreToLog {
+				afero.WriteFile(fs, fmt.Sprintf("./output/image_%s_score_%d.txt", imageChoice, score), Marshal(slides), 0760)
+			}
+		}
+		fmt.Print("\n")
+	}
+
+	fmt.Printf("Done :D Best score: %d\n", maxScore)
+}
+
+func makeSlideShow(images []image) []slide {
 	slides := make([]slide, 0)
-	for i := 0; i < len(images); i++ {
+	lengthImg := len(images)
+	for i := 0; i < lengthImg; i++ {
 		imgIndex := randomIndex(images)
 		img := images[imgIndex]
-		images = append(images[:imgIndex], images[imgIndex+1:]...)
+		images[imgIndex] = images[len(images)-1]
+		images = images[:len(images)-1]
 		if !img.vertical {
 			slides = append(slides, slide{images: []image{img}})
 			continue
@@ -60,23 +90,23 @@ func main() {
 
 		vIndex := findFirstVertical(images)
 		if vIndex == -1 {
+			fmt.Printf("\nWARN: found -1, len(images)=%d\n", len(images))
 			continue
 		}
 		slides = append(slides, slide{images: []image{img, images[vIndex]}})
-		images = append(images[:vIndex], images[vIndex+1:]...)
+		images[vIndex] = images[len(images)-1]
+		images = images[:len(images)-1]
 		i++
 	}
 
-	if err := afero.WriteFile(fs, fmt.Sprintf("ouput_%s.txt", imageChoice), Marshal(slides), 0760); err != nil {
-		fmt.Printf("PANIIIC: cannot write file: %s\n", err)
-		return
-	}
-
-	fmt.Println("Done :D")
+	return slides
 }
 
 func randomIndex(items []image) int {
-	return rand.Intn(len(items))
+	if len(items) == 1 {
+		return 0
+	}
+	return rand.Intn(len(items) - 1)
 }
 
 func findFirstVertical(items []image) int {
@@ -86,6 +116,39 @@ func findFirstVertical(items []image) int {
 		}
 	}
 	return -1
+}
+
+func getScore(slides []slide) int {
+	score := 0
+	for i := 0; i < len(slides)-1; i++ {
+		tagsA := getTags(slides[i])
+		tagsB := getTags(slides[i+1])
+		score += getTagScore(tagsA, tagsB)
+	}
+	return score
+}
+
+func getTags(slide slide) map[string]bool {
+	tags := make(map[string]bool)
+	for i := range slide.images {
+		for j := range slide.images[i].tags {
+			tags[slide.images[i].tags[j]] = true
+		}
+	}
+
+	return tags
+}
+
+// returns score from tag arrays comparison
+func getTagScore(a, b map[string]bool) int {
+	common := 0
+	for n := range a {
+		if _, ok := b[n]; ok {
+			common++
+		}
+	}
+
+	return min(min(len(a)-common, common), len(b)-common)
 }
 
 type slide struct {
