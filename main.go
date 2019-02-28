@@ -29,6 +29,13 @@ type image struct {
 
 type tag map[string][]image
 
+type slide []image
+
+type slideShow struct {
+	slides []slide
+	ids    []int
+}
+
 func main() {
 	images, err := parseFile(imagePath["a"])
 	if err != nil {
@@ -36,16 +43,34 @@ func main() {
 	}
 
 	//fmt.Printf("Result : %#v\n", images)
-
 	tags := GenerateDictionnaireTag(images)
 
-	for k, v := range tags {
+	slideShow := slideShow{}
+
+	fmt.Printf("\nthe lenght of tags is %d", len(tags))
+	for _, v := range tags {
+		fmt.Printf("\ntag is %d", v)
+		fmt.Printf("\nthe lenght of v is %d", len(v))
 		for _, image := range v {
-			fmt.Println(k, ": ", image)
+			if !intInSlice(image.id, slideShow.ids) {
+				temporySlide := make(slide, 0)
+				temporySlide[0] = image
+				slideShow.slides = append(slideShow.slides, temporySlide)
+				slideShow.ids = append(slideShow.ids, image.id)
+			}
+
 		}
 	}
+	fmt.Printf("Result : %#v\n", slideShow)
+}
 
-	//fmt.Printf("Result : %#v\n", tags)
+func intInSlice(a int, list []int) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
 
 func parseFile(filepath string) ([]image, error) {
