@@ -19,6 +19,14 @@ var (
 		"d": "./data/d_pet_pictures.txt",
 		"e": "./data/e_shiny_selfies.txt",
 	}
+
+	resPath = map[string]string{
+		"a": "./result/a_example.txt",
+		"b": "./result/b_lovely_landscapes.txt",
+		"c": "./result/c_memorable_moments.txt",
+		"d": "./result/d_pet_pictures.txt",
+		"e": "./result/e_shiny_selfies.txt",
+	}
 )
 
 type image struct {
@@ -37,25 +45,36 @@ type slideShow struct {
 }
 
 func main() {
-	images, err := parseFile(imagePath["b"])
-	if err != nil {
-		fmt.Printf("fatal: %v\n", err)
+	fileKeys := []string{"a", "b", "c", "d", "e"}
+
+	for _, fileKey := range fileKeys {
+		images, err := parseFile(imagePath[fileKey])
+		if err != nil {
+			fmt.Printf("fatal: %v\n", err)
+		}
+
+		//fmt.Printf("Result : %#v\n", images)
+		tags := GenerateDictionnaireTag(images)
+
+		curSlideShow := processSlideShow(tags)
+
+		//fmt.Printf("Result : %#v\n", curSlideShow)
+
+		writeFile(curSlideShow, fileKey)
 	}
+}
 
-	//fmt.Printf("Result : %#v\n", images)
-	tags := GenerateDictionnaireTag(images)
-
-	slideShow := slideShow{}
-
+func processSlideShow(tags map[string][]image) slideShow {
+	curSlideShow := slideShow{}
 	//fmt.Printf("\nthe lenght of tags is %d", len(tags))
 	for _, v := range tags {
 		//fmt.Printf("\ntag is %d", v)
 		//fmt.Printf("\nthe lenght of v is %d", len(v))
 		for _, image := range v {
-			if !intInSlice(image.id, slideShow.ids) {
+			if !intInSlice(image.id, curSlideShow.ids) {
 				lastSlide := slide{}
-				if len(slideShow.slides) > 0 {
-					lastSlide = slideShow.slides[len(slideShow.slides)-1]
+				if len(curSlideShow.slides) > 0 {
+					lastSlide = curSlideShow.slides[len(curSlideShow.slides)-1]
 				}
 
 				if len(lastSlide) == 1 && lastSlide[0].vertical && image.vertical {
@@ -63,21 +82,26 @@ func main() {
 				} else {
 					temporySlide := make(slide, 1)
 					temporySlide[0] = image
-					slideShow.slides = append(slideShow.slides, temporySlide)
-					slideShow.ids = append(slideShow.ids, image.id)
+					curSlideShow.slides = append(curSlideShow.slides, temporySlide)
+					curSlideShow.ids = append(curSlideShow.ids, image.id)
 				}
 			}
 		}
 	}
+	return curSlideShow
+}
 
-	//fmt.Printf("Result : %#v\n", slideShow)
-	fmt.Printf("%d\n", len(slideShow.slides))
-	for _, slide := range slideShow.slides {
+func writeFile(curSlideShow slideShow, fileKey string) {
+	resultFileContent := fmt.Sprintf("%d", len(curSlideShow.slides))
+	for _, slide := range curSlideShow.slides {
 		if len(slide) == 1 {
-			fmt.Printf("%d\n", slide[0].id)
+			resultFileContent += fmt.Sprintf("%d\n", slide[0].id)
 		} else {
-			fmt.Printf("%d %d\n", slide[0].id, slide[1].id)
+			resultFileContent += fmt.Sprintf("%d %d\n", slide[0].id, slide[1].id)
 		}
+	}
+	if err := afero.WriteFile(fs, resPath[fileKey], []byte(resultFileContent), 0644); err != nil {
+		panic(err)
 	}
 }
 
