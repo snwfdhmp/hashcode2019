@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -13,6 +14,8 @@ import (
 
 var (
 	fs = afero.NewOsFs()
+
+	imageChoice string
 
 	imagePath = map[string]string{
 		"a": "./data/a_example.txt",
@@ -34,7 +37,12 @@ type image struct {
 }
 
 func main() {
-	images, err := parseFile(imagePath["a"])
+	flag.StringVar(&imageChoice, "image", "a", "image to choose")
+	flag.Parse()
+
+	fmt.Printf("Processing image %s\n", strings.ToUpper(imageChoice))
+
+	images, err := parseFile(imagePath[imageChoice])
 	if err != nil {
 		fmt.Printf("fatal: %v\n", err)
 		return
@@ -59,12 +67,12 @@ func main() {
 		i++
 	}
 
-	if err := afero.WriteFile(fs, "ouput", Marshal(slides), 0760); err != nil {
+	if err := afero.WriteFile(fs, fmt.Sprintf("ouput_%s.txt", imageChoice), Marshal(slides), 0760); err != nil {
 		fmt.Printf("PANIIIC: cannot write file: %s\n", err)
 		return
 	}
 
-	fmt.Print("Done :D")
+	fmt.Println("Done :D")
 }
 
 func randomIndex(items []image) int {
