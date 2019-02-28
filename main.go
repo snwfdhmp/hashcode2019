@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sort"
 
 	"github.com/spf13/afero"
 )
@@ -67,10 +68,18 @@ func main() {
 func processSlideShow(tags map[string][]image) slideShow {
 	curSlideShow := slideShow{}
 	//fmt.Printf("\nthe lenght of tags is %d", len(tags))
-	for _, v := range tags {
+
+	sortedKeys := make([]string, 0, len(tags))
+	for k, _ := range tags {
+		sortedKeys = append(sortedKeys, k)
+	}
+
+	sort.Strings(sortedKeys)
+
+	for _, key := range sortedKeys {
 		//fmt.Printf("\ntag is %d", v)
 		//fmt.Printf("\nthe lenght of v is %d", len(v))
-		for _, image := range v {
+		for _, image := range tags[key] {
 			if !intInSlice(image.id, curSlideShow.ids) {
 				lastSlide := slide{}
 				if len(curSlideShow.slides) > 0 {
