@@ -59,6 +59,10 @@ func main() {
 
 		fmt.Printf("Test n°%d ...", try)
 		slides := makeSlideShow(saveImg)
+		if slides == nil {
+			fmt.Printf(" -- watchdog\n")
+			continue
+		}
 		score := getScore(slides)
 
 		fmt.Printf("\rTest n°%d: score %d", try, score)
@@ -78,13 +82,30 @@ func main() {
 func makeSlideShow(images []image) []slide {
 	slides := make([]slide, 0)
 	lengthImg := len(images)
+
+	attempt := 0
 	for i := 0; i < lengthImg; i++ {
+		if attempt > len(images) {
+			return nil
+		}
 		imgIndex := randomIndex(images)
 		img := images[imgIndex]
-		images[imgIndex] = images[len(images)-1]
-		images = images[:len(images)-1]
 		if !img.vertical {
-			slides = append(slides, slide{images: []image{img}})
+			slide := slide{images: []image{img}}
+			if i == 0 {
+				slides = append(slides, slide)
+				continue
+			}
+			scorePrevision := getTagScore(getTags(slides[i-1]), getTags(slide))
+			if scorePrevision > 5 || (scorePrevision > 4 && attempt > 10) || (scorePrevision > 3 && attempt > 20) || (scorePrevision > 2 && attempt > 30) || (scorePrevision >= 1 && attempt > 40) {
+				slides = append(slides, slide)
+				attempt = 0
+				images[imgIndex] = images[len(images)-1]
+				images = images[:len(images)-1]
+			} else {
+				attempt++
+				i--
+			}
 			continue
 		}
 
@@ -93,9 +114,22 @@ func makeSlideShow(images []image) []slide {
 			fmt.Printf("\nWARN: found -1, len(images)=%d\n", len(images))
 			continue
 		}
-		slides = append(slides, slide{images: []image{img, images[vIndex]}})
-		images[vIndex] = images[len(images)-1]
-		images = images[:len(images)-1]
+		slide := slide{images: []image{img, images[vIndex]}}
+		if i == 0 {
+			slides = append(slides, slide)
+			continue
+		}
+		scorePrevision := getTagScore(getTags(slides[i-1]), getTags(slide))
+		if scorePrevision > 5 || (scorePrevision > 4 && attempt > 10) || (scorePrevision > 3 && attempt > 20) || (scorePrevision > 2 && attempt > 30) || (scorePrevision >= 1 && attempt > 40) {
+			slides = append(slides, slide)
+			attempt = 0
+			images[vIndex] = images[len(images)-1]
+			images = images[:len(images)-1]
+		} else {
+			attempt++
+			i--
+		}
+		slides = append(slides, slide)
 		i++
 	}
 
