@@ -37,7 +37,7 @@ type slideShow struct {
 }
 
 func main() {
-	images, err := parseFile(imagePath["a"])
+	images, err := parseFile(imagePath["b"])
 	if err != nil {
 		fmt.Printf("fatal: %v\n", err)
 	}
@@ -73,7 +73,11 @@ func main() {
 	//fmt.Printf("Result : %#v\n", slideShow)
 	fmt.Printf("%d\n", len(slideShow.slides))
 	for _, slide := range slideShow.slides {
-		fmt.Printf("%d\n", slide[0].id)
+		if len(slide) == 1 {
+			fmt.Printf("%d\n", slide[0].id)
+		} else {
+			fmt.Printf("%d %d\n", slide[0].id, slide[1].id)
+		}
 	}
 }
 
