@@ -39,8 +39,13 @@ func main() {
 
 	tags := GenerateDictionnaireTag(images)
 
-	fmt.Printf("Result : %#v\n", tags)
+	for k, v := range tags {
+		for _, image := range v {
+			fmt.Println(k, ": ", image)
+		}
+	}
 
+	//fmt.Printf("Result : %#v\n", tags)
 }
 
 func parseFile(filepath string) ([]image, error) {
@@ -87,7 +92,7 @@ func GenerateDictionnaireTag(images []image) map[string][]image {
 	tag := make(map[string][]image)
 	for i := range images {
 		for j := range images[i].tags {
-			fmt.Printf("\ntag is : %s and image is : %s", images[i].tags[j], images[i])
+			//fmt.Printf("\ntag is : %s and image is : %s", images[i].tags[j], images[i])
 			tag[images[i].tags[j]] = append(tag[images[i].tags[j]], images[i])
 		}
 
